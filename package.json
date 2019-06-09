@@ -4,7 +4,7 @@
   "description": "A redux reducer generator and more",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "eslint ./src && echo \"Error: no test specified\" && exit 1",
     "build": "babel src -d lib",
     "prepare": "npm run build"
   },
@@ -25,7 +25,10 @@
   "devDependencies": {
     "@babel/cli": "^7.4.4",
     "@babel/core": "^7.4.4",
-    "@babel/preset-env": "^7.4.4"
+    "@babel/preset-env": "^7.4.4",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.17.3"
   },
   "peerDependencies": {
     "redux": "^3.7.2"

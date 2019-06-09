@@ -1,7 +1,7 @@
-import { createReducer } from '../utils';
-import { promiseStates } from '../constants';
 import { Cmd, loop } from 'redux-loop';
 import { createSelector } from 'reselect';
+import { createReducer } from '../utils';
+import { promiseStates } from '../constants';
 
 const REQUESTED = 'REQUESTED';
 const RECEIVED = 'RECEIVED';
@@ -11,12 +11,12 @@ const DELETE = 'DELETE';
 const RESET = 'RESET';
 
 const defaultOptions = {
-  sequence: false
+  sequence: false,
 };
 
 const defaultActions = {
   actions: [],
-  options: defaultOptions
+  options: defaultOptions,
 };
 
 const requestedDefault = Object.create(defaultActions);
@@ -24,58 +24,59 @@ const receivedDefault = Object.create(defaultActions);
 const failedDefault = Object.create(defaultActions);
 
 export default (config) => {
+  // eslint-disable-next-line
   const logger = config.debug ? console.log : () => {};
 
   const actionGenerator = (actions, rootAction, ...rest) => {
     logger(`${config.actionPrefix}:actionGenerator > `, actions, rootAction, rest);
     return actions
-        .map(action => Cmd.action(action(rootAction)));
+      .map(action => Cmd.action(action(rootAction)));
   };
 
   const extractHttpStatus = payload => ({
     headers: payload.headers,
     statusText: payload.statusText,
-    status: payload.status
+    status: payload.status,
   });
 
   const reducerCreator = ({
-                            actionPrefix,
-                            requestHandler,
-                            requested = requestedDefault,
-                            received = receivedDefault,
-                            rejected = failedDefault,
-                            receivedDataTransformer = receivedData => ({ data: receivedData }),
-                            initialState = {
-                              data: {},
-                              promiseState: promiseStates.INIT,
-                            }
-                          }) => {
+    actionPrefix,
+    requestHandler,
+    requested = requestedDefault,
+    received = receivedDefault,
+    rejected = failedDefault,
+    receivedDataTransformer = receivedData => ({ data: receivedData }),
+    initialState = {
+      data: {},
+      promiseState: promiseStates.INIT,
+    },
+  }) => {
     const requestActionHandler = (state, rootAction) => {
       logger(`${rootAction.type}:`, state, rootAction);
       const { url, params, data } = rootAction;
       return loop(
-          {
-            ...state,
-            promiseState: promiseStates.PENDING,
-          },
-          Cmd.list([
-            Cmd.run(requestHandler, {
-              successActionCreator: successResponse => ({
-                type: `${actionPrefix}_${RECEIVED}`,
-                successResponse,
-                rootAction
-              }),
-              failActionCreator: errorResponse => ({
-                type: `${actionPrefix}_${FAILED}`,
-                errorResponse,
-                rootAction
-              }),
-              args: [url, params, data]
+        {
+          ...state,
+          promiseState: promiseStates.PENDING,
+        },
+        Cmd.list([
+          Cmd.run(requestHandler, {
+            successActionCreator: successResponse => ({
+              type: `${actionPrefix}_${RECEIVED}`,
+              successResponse,
+              rootAction,
             }),
-            ...actionGenerator(requested.actions, rootAction)
-          ], {
-            ...requested.options
+            failActionCreator: errorResponse => ({
+              type: `${actionPrefix}_${FAILED}`,
+              errorResponse,
+              rootAction,
+            }),
+            args: [url, params, data],
           }),
+          ...actionGenerator(requested.actions, rootAction),
+        ], {
+          ...requested.options,
+        }),
       );
     };
 
@@ -89,9 +90,9 @@ export default (config) => {
         ...requestData,
         promiseState: promiseStates.RESOLVED,
       }, Cmd.list([
-        ...actionGenerator(received.actions, action)
+        ...actionGenerator(received.actions, action),
       ], {
-        ...received.options
+        ...received.options,
       }));
     };
 
@@ -104,9 +105,9 @@ export default (config) => {
         ...initialState,
         promiseState: promiseStates.REJECTED,
       }, Cmd.list([
-        ...actionGenerator(rejected.actions, action)
+        ...actionGenerator(rejected.actions, action),
       ], {
-        ...rejected.options
+        ...rejected.options,
       }));
     };
 
@@ -134,8 +135,8 @@ export default (config) => {
     }
 
     return createReducer(
-        initialState,
-        handlers
+      initialState,
+      handlers,
     );
   };
 
@@ -145,7 +146,7 @@ export default (config) => {
       url,
       params,
       data,
-      extraPayload
+      extraPayload,
     }),
     reset: () => ({
       type: `${config.actionPrefix}_${RESET}`,
@@ -153,23 +154,23 @@ export default (config) => {
     reducer: reducerCreator(config),
     storeName: config.storeName,
     selector: config.selector || createSelector(
-        (state) => {
-          logger(`${config.actionPrefix}:selector`, state);
-          return state[config.storeName];
-        },
-        (componentState) => {
-          logger(`${config.actionPrefix}:selector`, componentState);
-          return ({
-            ...componentState,
-          });
-        }
+      (state) => {
+        logger(`${config.actionPrefix}:selector`, state);
+        return state[config.storeName];
+      },
+      (componentState) => {
+        logger(`${config.actionPrefix}:selector`, componentState);
+        return ({
+          ...componentState,
+        });
+      },
     ),
   };
 
   if (config.updateActionHandler) {
     publicInterface.update = payload => ({
       type: `${config.actionPrefix}_${UPDATE}`,
-      payload
+      payload,
     });
   }
 
@@ -178,11 +179,10 @@ export default (config) => {
       logger(`${config.actionPrefix}:deleteActionHandler: `, payload);
       return ({
         type: `${config.actionPrefix}_${DELETE}`,
-        payload
+        payload,
       });
     };
   }
 
   return (publicInterface);
 };
-
